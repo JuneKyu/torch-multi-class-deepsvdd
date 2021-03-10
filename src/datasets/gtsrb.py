@@ -43,9 +43,6 @@ class GTSRB_Dataset(TorchvisionDataset):
         total.sort()
 
         normal_scenario = scenario_classes[normal_class[0]]
-        normal_class = []
-        for normal in normal_scenario:
-            normal_class.append(total.index(normal))
 
         for i in self.normal_classes:
             self.outlier_classes.remove(i)
@@ -53,15 +50,11 @@ class GTSRB_Dataset(TorchvisionDataset):
         with open(os.path.join(self.root, 'gtsrb_min_max.pkl'), 'rb') as f:
             min_max = pickle.load(f)
 
-        # TODO
         normal_mean = 0
         normal_std = 0
         for i in self.normal_classes:
             normal_mean += min_max[i][0]
             normal_std += min_max[i][1] - min_max[i][0]
-
-        #  pdb.set_trace()
-        #  normal
 
         transform = transforms.Compose([
             transforms.Resize((32, 32)),
@@ -70,9 +63,6 @@ class GTSRB_Dataset(TorchvisionDataset):
                 lambda x: global_contrast_normalization(x, scale='l1')),
             transforms.Normalize([normal_mean] * 3, [normal_std] * 3)
         ])
-
-        #  self.tf1 = transforms.Resize
-
 
         target_transform = transforms.Lambda(
             lambda x: int(x in self.outlier_classes))

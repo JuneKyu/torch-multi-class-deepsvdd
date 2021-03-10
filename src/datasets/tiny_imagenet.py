@@ -26,21 +26,32 @@ class TINY_Imagenet_Dataset(TorchvisionDataset):
         self.normal_classes = tuple(normal_class)
         self.outlier_classes = list(range(0, 200))
 
+        train_classes = []
+        with open(os.path.join(root, 'tiny-imagenet-200/tiny_imagenet_classes.txt'), 'r') as f:
+            item = f.read()
+            train_classes = item.split('\n')[:-1]
+
         animal = [66, 90, 134, 139, 148, 180, 182, 191]
         insect = [13, 31, 92, 123, 165, 177, 196, 199]
         instruments = [16, 17, 18, 72, 74, 116, 128, 197]
         structure = [48, 58, 69, 96, 122, 151, 157, 178]
         transportation = [0, 22, 23, 26, 46, 47, 156, 169]
+        total_index = animal + insect + instruments + structure + transportation
+
+        #  animal = change_index(train_classes, animal)
+        #  insect = change_index(train_classes, insect)
+        #  instruments = change_index(train_classes, instruments)
+        #  structure = change_index(train_classes, structure)
+        #  transportation = change_index(train_classes, transportation)
+
         total = animal + insect + instruments + structure + transportation
         scenario_classes = (animal, insect, instruments, structure, transportation)
         total.sort()
+        self.outlier_classes = (total)
 
         normal_scenario = scenario_classes[normal_class[0]]
-        normal_class = []
-        for normal in normal_scenario:
-            normal_class.append(total.index(normal))
 
-        for i in self.normal_classes:
+        for i in normal_scenario:
             self.outlier_classes.remove(i)
 
         with open(os.path.join(self.root, 'tiny_imagenet_200_min_max.pkl'), 'rb') as f:
@@ -69,7 +80,9 @@ class TINY_Imagenet_Dataset(TorchvisionDataset):
                                    target_transform=target_transform)
 
         train_idx_normal = get_target_label_idx(train_set.train_labels,
-                                                self.normal_classes)
+                                                #  self.normal_classes)
+                                                normal_scenario)
+
         self.train_set = Subset(train_set, train_idx_normal)
 
         self.test_set = MyTinyImagenet(root=self.root,
@@ -102,6 +115,15 @@ def val_dataset_labeling(val_path):
 
     os.remove(os.path.join(val_path, 'val_annotations.txt'))
     os.rmdir(os.path.join(val_path, 'images'))
+
+
+def change_index(classes, indexes):
+    
+    class_indexes = []
+    for i in indexes:
+        class_indexes.append(classes[i])
+
+    return class_indexes
 
 
 class MyTinyImagenet(Dataset):
